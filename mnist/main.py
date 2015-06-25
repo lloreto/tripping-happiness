@@ -3,6 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.linear_model import LogisticRegression
+from sklearn import metrics
 
 train_data = pd.read_csv(r'data/train.csv')
 test_data = pd.read_csv(r'data/test.csv')
@@ -26,7 +27,7 @@ def split_data(data,percent):
     split_indices = np.split(indices,edges)
     return [data.ix[idx] for idx in split_indices]
 
-def report(expected, predicted):
+def report(classifier, expected, predicted):
     print("Classification report for classifier %s:\n%s\n"
       % (classifier, metrics.classification_report(expected, predicted)))
     print("Confusion matrix:\n%s" % metrics.confusion_matrix(expected, predicted))
@@ -41,7 +42,7 @@ def log_reg_classifier():
     logreg = LogisticRegression(C=1e5)
     logreg.fit(train.iloc[::,1::],train.label)
     predicted = logreg.predict(validate.iloc[:,1:])
-    report(train.label,predicted)
+    report('logreg',validate.label,predicted)
 
 
 def pca_svm_classifier():
