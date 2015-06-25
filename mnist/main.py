@@ -2,6 +2,7 @@
 import pandas as pd 
 import matplotlib.pyplot as plt
 import numpy as np
+from sklearn.linear_model import LogisticRegression
 
 train_data = pd.read_csv(r'data/train.csv')
 test_data = pd.read_csv(r'data/test.csv')
@@ -36,7 +37,12 @@ def log_reg_classifier():
     http://www.codeproject.com/Articles/821347/MultiClass-Logistic-Classifier-in-Python 
     http://deeplearning.net/tutorial/gettingstarted.html
     '''
-    pass
+    train, validate = split_data(train_data,(0.7))
+    logreg = LogisticRegression(C=1e5)
+    logreg.fit(train.iloc[::,1::],train.label)
+    predicted = logreg.predict(validate.iloc[:,1:])
+    report(train.label,predicted)
+
 
 def pca_svm_classifier():
     '''Principle components -> SVM
