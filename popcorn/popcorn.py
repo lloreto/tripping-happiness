@@ -8,6 +8,7 @@ from gensim.models import word2vec
 import logging
 import numpy as np
 from sklearn import metrics 
+from sklearn.ensemble import RandomForestClassifier
 
 # Read data from files 
 def load_data(dev=False):
@@ -186,11 +187,61 @@ def run_popcorn_bag_of_words():
     predicted = forest.predict(bag_test)
     report('RandomForest',test['sentiment'],predicted)
 
+import numpy as np
+
+def makeFeatureVec(words, model, num_features):
+    featureVec = np.zeros((num_features), dtype = 'float32')
+    nwords = 0
+    index2word_set = set(model.index2word)
+
+    #Loop over each word, and the wordvec to the feature total
+    for word in words:
+        if word in index2word_set:
+            nwords += 1
+            featureVec = featureVec + model[word]
+
+    return featureVec / num_features # Return averaged
+
+def getAvgFeatureVecs(reviews, model, num_features):
+
+    reviewFeatureVecs = np.zeros((len(reviews), num_features), dtype='float32')
+
+    for counter, review in enumerate(reviews):
+        if counter % 1000. == 0.:
+            print('Review %d of %d' % (counter, len(reviews)))
+        reviewFeatureVecs[counter] = makeFeatureVec(review, model, \
+                num_features)
+
+    return reviewFeatureVecs
+
+
+
 def run_popcorn_word2vec():
     '''Runs a model with word2vec preprocessing'''
-    model = load_model()
+    model = load_word2vec_model()
 
+    num_features = 300
 
+    train, _, _ = load_data()
+    train, test = split_data(train,0.7)
+
+    clean_train_reviews = []
+    for review in train['review']:
+        clean_train_reviews.append(review_to_words(review, \
+                remove_stopwords=True))
+    trainDataVecs = getAvgFeatureVecs( clean_train_reviews, model, num_features)
+
+    clean_test_reviews = []
+    for review in test['review']:
+        clean_test_reviews.append(review_to_words(review, \
+                remove_stopwords=True))
+    testDataVecs = getAvgFeatureVecs( clean_test_reviews, model, num_features)
+
+    forest = RandomForestClassifier(n_estimators = 100)
+    forest = forest.fit( trainDataVecs, train['sentiment'])
+    predicted = forest.predict( testDataVecs )
+
+    report('word2vec_average', test['sentiment'], predicted)
 
 
 
